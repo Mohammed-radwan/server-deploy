@@ -7,7 +7,7 @@ const uuidv4 =require("uuid/v4");
 const fs =require("fs");
 const compression = require("compression");
 const helmet = require("helmet");
-
+const SHA256 =  require('crypto-js');
 const PORT = process.env.PORT||8000;
 server.listen(PORT,()=>{
     console.log(`Server is running on Localhost: ${PORT}`);
@@ -22,6 +22,13 @@ server.use(helmet());
 server.get("/",(request,response)=>{
     response.send("We are in the master branch")
 })
+
+server.get("/password",(request,response)=>{
+const password="password1234";
+const hashedPassword =SHA256(password);
+console.log({hashedPassword});
+})
+
 server.get("/get/jokes",(request,response)=>{
     connection.query(`select * from joke `,(error,results)=>{
     if(error){
