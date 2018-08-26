@@ -19,6 +19,9 @@ server.use(cors({origin:"http://localhost:3000"}));
 server.use(compression());
 server.use(helmet());
 
+server.get("/",(request,response)=>{
+    response.send("We are in the master branch")
+})
 server.get("/get/jokes",(request,response)=>{
     connection.query(`select * from joke `,(error,results)=>{
     if(error){
