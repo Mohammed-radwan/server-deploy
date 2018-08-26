@@ -5,6 +5,8 @@ const bodyParser =require("body-parser");
 const {connection}= require("./Connection");
 const uuidv4 =require("uuid/v4");
 const fs =require("fs");
+const compression = require("compression");
+const helmet = require("helmet");
 
 const PORT = process.env.PORT||8000;
 server.listen(PORT,()=>{
@@ -14,6 +16,8 @@ server.listen(PORT,()=>{
 server.use(express.static('public'));
 server.use(bodyParser.json());
 server.use(cors({origin:"http://localhost:3000"}));
+server.use(compression());
+server.use(helmet());
 
 server.get("/get/jokes",(request,response)=>{
     connection.query(`select * from joke `,(error,results)=>{
