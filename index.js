@@ -5,8 +5,12 @@ const bodyParser =require("body-parser");
 const {connection}= require("./Connection");
 const uuidv4 =require("uuid/v4");
 const fs =require("fs");
-
+const compression = require("compression");
+const helmet = require("helmet");
+// const {SHA256,AES,enc} =  require('crypto-js');
+const cryptojs= require('crypto-js');
 const PORT = process.env.PORT||8000;
+
 server.listen(PORT,()=>{
     console.log(`Server is running on Localhost: ${PORT}`);
 })
@@ -14,6 +18,55 @@ server.listen(PORT,()=>{
 server.use(express.static('public'));
 server.use(bodyParser.json());
 server.use(cors({origin:"http://localhost:3000"}));
+server.use(compression());
+server.use(helmet());
+
+
+server.get("/regestration/:username/:password",(request,response)=>{
+const {username,password: password}=request.params;
+const hashedPassword =cryptojs.SHA256(password).toString();
+const salt =uuidv4();
+const encryptedPassword = cryptojs.AES.encrypt(hashedPassword,salt).toString();
+const sql ="insert into user set ?";
+const values ={
+    username,
+    password: encryptedPassword,
+    salt
+}
+connection.query(sql,values,(error,results)=>{
+    if(error) showError(error,response);
+    else{
+        response.json({status:"Success", message:"Registered"})
+    }
+})
+
+})
+
+server.get("/login/:username/:password",(request,response)=>{
+    const {username,password:password}=request.params;
+    const hashedPassword=cryptojs.SHA256(password).toString();
+    
+    const sql = `select username,password,salt from user where username= ?`;
+    const values =[username];
+
+    connection.query(sql,values,(error,results)=>{
+        if(error) showError(error,response);
+        else{
+            if(results[0]){  // I used this condition to throw an error if the username is wrong 
+                const decryptedPassword  = cryptojs.AES.decrypt(results[0].password,results[0].salt);
+                const hashedDatabasePassword = decryptedPassword.toString(cryptojs.enc.Utf8);
+
+                if(hashedDatabasePassword==hashedPassword){
+
+                    response.json({status:"Sucsess",message:"login succesfull"})
+
+                }else showAccessError(error,response);
+        
+            }else showAccessError(error,response);
+        
+        }
+    })
+})
 
 server.get("/get/jokes",(request,response)=>{
     connection.query(`select * from joke `,(error,results)=>{
@@ -48,6 +101,10 @@ server.post("/update/joke/:vote",(request,response)=>{
 function showError(error,response){
     console.log(error);
     response.json({status:"error",message:"something went wrong "});
+}
+function showAccessError(error,response){
+    console.log(error);
+    response.json({status:"Failed",message:"Wrong username or password "});
 }
 
 server.post("/post/joke",(request,response)=>{
