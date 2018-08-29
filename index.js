@@ -67,6 +67,10 @@ server.get("/login/:username/:password",(request,response)=>{
         }
     })
 })
+function showAccessError(error,response){
+    console.log(error);
+    response.json({status:"Failed",message:"Wrong username or password "});
+}
 
 server.get("/get/jokes",(request,response)=>{
     connection.query(`select * from joke `,(error,results)=>{
@@ -101,10 +105,6 @@ server.post("/update/joke/:vote",(request,response)=>{
 function showError(error,response){
     console.log(error);
     response.json({status:"error",message:"something went wrong "});
-}
-function showAccessError(error,response){
-    console.log(error);
-    response.json({status:"Failed",message:"Wrong username or password "});
 }
 
 server.post("/post/joke",(request,response)=>{
